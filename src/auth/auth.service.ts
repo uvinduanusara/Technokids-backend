@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RegisterDto } from './dto/register.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -14,15 +15,20 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(data: any) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+  async register(data: RegisterDto) {
+    const { password, ...rest } = data;
+    const hashedPassword = await bcrypt.hash(password, 10);
     try {
       const user = await this.prisma.user.create({
-        data: { ...data, password: hashedPassword },
+        data: {
+          ...rest,
+          password: hashedPassword,
+        },
       });
       return { message: 'User created successfully', userId: user.id };
-    } catch (e) {
-      throw new BadRequestException('Email already exists');
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      throw new BadRequestException(errorMessage || 'Email already exists');
     }
   }
 
