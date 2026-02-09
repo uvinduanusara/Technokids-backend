@@ -22,7 +22,7 @@ export class CoursesService {
       include: {
         enrollments: {
           include: {
-            user: { select: { name: true, email: true } },
+            user: { select: { name: true, username: true } },
           },
         },
       },
@@ -31,11 +31,26 @@ export class CoursesService {
 
   // 3. Link a student to a course via the Enrollment table
   async enrollStudent(courseId: string, studentId: string) {
-    return await this.prisma.enrollment.create({
-      data: {
-        courseId,
-        userId: studentId,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      // Create enrollment
+      const enrollment = await tx.enrollment.create({
+        data: {
+          courseId,
+          userId: studentId,
+        },
+      });
+
+      // Create pending payment
+      await tx.payment.create({
+        data: {
+          amount: 0,
+          status: 'PENDING',
+          studentId,
+          courseId,
+        },
+      });
+
+      return enrollment;
     });
   }
 }

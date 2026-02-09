@@ -28,17 +28,17 @@ export class AuthService {
       return { message: 'User created successfully', userId: user.id };
     } catch (error) {
       const errorMessage = (error as Error).message;
-      throw new BadRequestException(errorMessage || 'Email already exists');
+      throw new BadRequestException(errorMessage || 'Username already exists');
     }
   }
 
-  async login(email: string, pass: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  async login(username: string, pass: string) {
+    const user = await this.prisma.user.findUnique({ where: { username } });
     if (!user || !(await bcrypt.compare(pass, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, username: user.username, role: user.role };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
