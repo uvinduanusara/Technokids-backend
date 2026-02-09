@@ -6,6 +6,7 @@ import {
   Req,
   Get,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { QuizzesService } from './quizzes.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
@@ -31,6 +32,18 @@ export class QuizzesController {
   @Get('my-exams')
   async getMyExams(@Req() req: RequestWithUser) {
     return this.quizzesService.getMyExams(req.user.sub);
+  }
+
+  @Get()
+  @Roles(Role.TEACHER)
+  async findAll() {
+    return this.quizzesService.getAllExams();
+  }
+
+  @Delete(':id')
+  @Roles(Role.TEACHER)
+  async remove(@Param('id') id: string) {
+    return this.quizzesService.deleteExam(id);
   }
 
   @Post(':id/submit')

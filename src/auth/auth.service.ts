@@ -16,12 +16,18 @@ export class AuthService {
   ) {}
 
   async register(data: RegisterDto) {
-    const { password, ...rest } = data;
+    const { password, dob, ...rest } = data;
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Convert dob to Date object if present, otherwise undefined (allows Prisma to set null)
+    // Also handle empty string which might come from frontend form
+    const birthDate = dob && dob !== '' ? new Date(dob) : undefined;
+
     try {
       const user = await this.prisma.user.create({
         data: {
           ...rest,
+          dob: birthDate,
           password: hashedPassword,
         },
       });
