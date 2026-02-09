@@ -33,6 +33,7 @@ model User {
   role        Role         @default(STUDENT)
   enrollments Enrollment[]
   payments    Payment[]
+  attempts    Attempt[]
 }
 
 model Course {
@@ -44,6 +45,7 @@ model Course {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  quizzes     Quiz[]
   enrollments Enrollment[]
   payments    Payment[]
 }
@@ -60,18 +62,55 @@ model Enrollment {
 }
 
 model Payment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
   amount    Float
   status    PaymentStatus @default(PENDING)
-  studentId String   @db.ObjectId
-  courseId  String   @db.ObjectId
-  student   User     @relation(fields: [studentId], references: [id])
-  course    Course   @relation(fields: [courseId], references: [id])
-  createdAt DateTime @default(now())
+  studentId String        @db.ObjectId
+  courseId  String        @db.ObjectId
+  student   User          @relation(fields: [studentId], references: [id])
+  course    Course        @relation(fields: [courseId], references: [id])
+  createdAt DateTime      @default(now())
 }
 
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+model Quiz {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  creatorId   String     @db.ObjectId
+  questions   Question[] // Relation to questions
+  course      Course     @relation(fields: [courseId], references: [id])
+  courseId    String     @db.ObjectId
+  createdAt   DateTime   @default(now())
+  attempts    Attempt[]
+}
+
+model Question {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  text          String
+  options       String[] // List of possible answers
+  correctAnswer Int // Index of the correct option in the array
+  points        Int      @default(1)
+  quiz          Quiz     @relation(fields: [quizId], references: [id])
+  quizId        String   @db.ObjectId
+}
+
+model Attempt {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  studentId   String   @db.ObjectId
+  quizId      String   @db.ObjectId
+  answers     Json[] // Stores array of { questionId: string, selectedOption: number }
+  score       Int      @default(0)
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id])
+  quiz    Quiz @relation(fields: [quizId], references: [id])
+
+  @@unique([studentId, quizId]) // Prevents multiple records for the same student and quiz
 }

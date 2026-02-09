@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
+import { Course, Enrollment } from '@prisma/client';
 
 @Injectable()
 export class CoursesService {
@@ -66,6 +67,9 @@ export class CoursesService {
     });
 
     // Filter out potential null courses due to database inconsistencies
-    return enrollments.filter((enrollment) => enrollment.course !== null);
+    return enrollments.filter(
+      (enrollment): enrollment is Enrollment & { course: Course } =>
+        enrollment.course !== null,
+    );
   }
 }
