@@ -53,4 +53,19 @@ export class CoursesService {
       return enrollment;
     });
   }
+
+  // 4. Find all courses a student is enrolled in
+  async findEnrolledCourses(studentId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        userId: studentId,
+      },
+      include: {
+        course: true,
+      },
+    });
+
+    // Filter out potential null courses due to database inconsistencies
+    return enrollments.filter((enrollment) => enrollment.course !== null);
+  }
 }

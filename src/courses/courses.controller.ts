@@ -13,6 +13,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { EnrollStudentDto } from './dto/enroll-student.dto';
+import { type RequestWithUser } from '../auth/types/request-with-user.interface';
 
 @Controller('courses')
 @UseGuards(AuthGuard, RolesGuard)
@@ -31,8 +32,14 @@ export class CoursesController {
     return await this.coursesService.enrollStudent(dto.courseId, dto.studentId);
   }
 
+  @Get('enrolled')
+  @Roles(Role.STUDENT, Role.TEACHER)
+  async findEnrolled(@Request() req: RequestWithUser) {
+    return this.coursesService.findEnrolledCourses(req.user.sub);
+  }
+
   @Get()
-  @Roles(Role.STUDENT, Role.TEACHER) // Both can view
+  @Roles(Role.TEACHER) // Both can view
   findAll() {
     return this.coursesService.findAll();
   }
