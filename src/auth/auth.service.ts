@@ -13,7 +13,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(data: RegisterDto) {
     const { password, dob, ...rest } = data;
@@ -48,5 +48,68 @@ export class AuthService {
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  async getAllStudents() {
+    return this.prisma.user.findMany({
+      where: {
+        role: 'STUDENT',
+      },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        level: true,
+        grade: true,
+        address: true,
+        dob: true,
+        contactNo: true,
+        whatsappNo: true,
+        enrollments: {
+          include: {
+            course: true,
+          },
+        },
+      }
+    });
+  }
+
+  async updateStudent(id: string, data: any) {
+    const { name, contactNo, grade, level, address } = data;
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        contactNo,
+        grade,
+        level,
+        address,
+      },
+    });
+  }
+
+  async deleteStudent(id: string) {
+    // Delete related records first to avoid foreign key constraints
+
+    // 1. Delete Enrollments
+    await this.prisma.enrollment.deleteMany({
+      where: { userId: id },
+    });
+
+    // 2. Delete Payments
+    await this.prisma.payment.deleteMany({
+      where: { studentId: id },
+    });
+
+    // 3. Delete Attempts (Quiz results)
+    await this.prisma.attempt.deleteMany({
+      where: { studentId: id },
+    });
+
+    // 4. Finally, delete the User
+    return this.prisma.user.delete({
+      where: { id },
+    });
   }
 }
